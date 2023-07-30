@@ -6,6 +6,11 @@ Returns:
 from cloudant.client import Cloudant
 from cloudant.error import CloudantException
 import requests
+import os
+
+couch_url = os.environ.get('COUCH_URL')
+couch_username = os.environ.get('COUCH_USERNAME')
+i_am_api_key = os.environ.get('IAM_API_KEY')
 
 
 def main(param_dict):
@@ -20,8 +25,8 @@ def main(param_dict):
 
     try:
         client = Cloudant.iam(
-            account_name=param_dict["COUCH_USERNAME"],
-            api_key=param_dict["IAM_API_KEY"],
+            account_name = couch_username or param_dict['COUCH_USERNAME'],
+            api_key= i_am_api_key or param_dict['IAM_API_KEY'],
             connect=True,
         )
         print(f"Databases: {client.all_dbs()}")

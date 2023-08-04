@@ -20,5 +20,5 @@ class CarMakeAdmin(admin.ModelAdmin):
     inlines = [CarModelInline]
 
 # Register models here
-admin.site.register(CarMake)
-admin.site.register(CarModel)
+admin.site.register(CarMake, CarMakeAdmin)
+admin.site.register(CarModel, CarModelAdmin)

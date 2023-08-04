@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'djangoapp'
+    # 'djangoapp',
 ]
 
 MIDDLEWARE = [
@@ -73,6 +73,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'djangobackend.wsgi.application'
+# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Database

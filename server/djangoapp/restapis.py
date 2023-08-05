@@ -1,14 +1,18 @@
 import requests
 import json
+from ibm_watson import NaturalLanguageUnderstandingV1
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+from ibm_watson.natural_language_understanding_v1 import SentimentOptions, Features
 # import related models here
 from .models import CarDealer
+from .models import DealerReview
 from requests.auth import HTTPBasicAuth
 
 
 # Create a `get_request` to make HTTP GET requests
-# e.g., response = requests.get(url, params=params, headers={'Content-Type': 'application/json'},
-#                                     auth=HTTPBasicAuth('apikey', api_key))
+# e.g., response = requests.get(url, params=params, headers={'Content-Type': 'application/json'}, auth=HTTPBasicAuth('apikey', api_key))
 def get_request(url, **kwargs):
+    print('getting request')
     # print(kwargs)
     # print("GET from {} ".format(url))
     try:
@@ -21,17 +25,29 @@ def get_request(url, **kwargs):
     status_code = response.status_code
     # print("With status {} ".format(status_code))
     json_data = json.loads(response.text)
+    print('got the request')
     return json_data
 
 
 # Create a `post_request` to make HTTP POST requests
 # e.g., response = requests.post(url, params=kwargs, json=payload)
-
+def post_request(url,params,**kwargs):
+    print('before',params)
+    try:
+        response = requests.get(url=url, params=params)
+        response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
+        return response # Parse the response as JSON
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        return None
+    # headers = {'Content-Type': 'application/json'}
+    # Send the POST request with the specified URL, data, and headers
+    # response = requests.get(url=url, json=json, headers=headers)
+    # json_data = response
+    # print(json_data)
+    # return json_data
 
 # Create a get_dealers_from_cf method to get dealers from a cloud function
-# def get_dealers_from_cf(url, **kwargs):
-# - Call get_request() with specified arguments
-# - Parse JSON results into a CarDealer object list
 def get_dealers_from_cf(url, **kwargs):
     results = []
     # Call get_request with a URL parameter
@@ -47,17 +63,67 @@ def get_dealers_from_cf(url, **kwargs):
                                    short_name=dealer_doc["short_name"],
                                    st=dealer_doc["st"], zip=dealer_doc["zip"])
             results.append(dealer_obj)
-
     return results
 
 
 # Create a get_dealer_reviews_from_cf method to get reviews by dealer id from a cloud function
-# def get_dealer_by_id_from_cf(url, dealerId):
-# - Call get_request() with specified arguments
-# - Parse JSON results into a DealerView object list
+def get_dealer_reviews_from_cf(url, **kwargs):
+    print('2 getteing dealer reviews in restapis')
+    results = []
+    # Call get_request with a URL parameter
+    json_result = get_request(
+        url=url, dealer=kwargs['dealerId'] if isinstance(kwargs['dealerId'], int) else 15)
+    print(kwargs['dealerId'],json_result)
+
+
+    if json_result:
+        print('after getting the result we will create results with json_restult')
+        
+        # For each view object
+        for review in json_result:
+            print(review['review'])
+            # Create a CarDealer object with values in `doc` object
+            dealer_obj = DealerReview(name=review['name'], dealership=review['dealership'], purchase=review['purchase'],
+                                      review=review['review'], car_model=review['car_model'], car_year=review['car_year'], sentiment=analyze_review_sentiments(review['review']), id=review['id'], purchase_date=review['purchase_date'], car_make=review['car_make'])
+            results.append(dealer_obj)
+    return results
 
 
 # Create an `analyze_review_sentiments` method to call Watson NLU and analyze text
-# def analyze_review_sentiments(text):
-# - Call get_request() with specified arguments
-# - Get the returned sentiment label such as Positive or Negative
+def analyze_review_sentiments(dealerreview):
+    api_key = 'g2nasPeBYSwXUzM7iEmwpm12_pbjkqAYsWe21BWBWmq2'
+    service_url = 'https://api.au-syd.natural-language-understanding.watson.cloud.ibm.com/instances/f94c8975-af87-4626-8e11-59010acec5b8'
+
+    authenticator = IAMAuthenticator(api_key)
+    
+    natural_language_understanding = NaturalLanguageUnderstandingV1(
+        version='2021-08-01',
+        authenticator=authenticator
+    )
+
+    natural_language_understanding.set_service_url(service_url)
+
+    response = natural_language_understanding.analyze(
+        text=dealerreview,
+        features=Features(sentiment=SentimentOptions())
+    ).get_result()
+
+    # Extract the sentiment score from the response
+    sentiment_score = response['sentiment']['document']['score']
+
+    # Determine the sentiment label based on the score
+    if sentiment_score >= 0.75:
+        sentiment_label = 'Very Positive'
+    elif sentiment_score >= 0.45:
+        sentiment_label = 'Positive'
+    elif sentiment_score >= -0.2:
+        sentiment_label = 'Neutral'
+    elif sentiment_score >= -0.75:
+        sentiment_label = 'Negative'
+    else:
+        sentiment_label = 'Very Negative'
+
+    return sentiment_label
+
+
+

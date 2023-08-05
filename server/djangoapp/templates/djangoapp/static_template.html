@@ -23,11 +23,12 @@
     <nav class="navbar navbar-light bg-light">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="#">Online static page</a>
+                <a class="navbar-brand" href="/djangoapp">Online static page</a>
             </div>
             <div class="navbar">
                 <a class="navbar" href="/djangoapp/about">About Us</a>
                 <a class="navbar" href="/djangoapp/contact">Contact Us</a>
+                <a class="navbar" href="/djangoapp/dealers">Dealers</a>
             </div>
         </div>
         <ul class="nav navbar-nav navbar-right">
@@ -51,9 +52,9 @@
     {% endif %}
 </ul>
     </nav>
-
+    {% block content%}
     <!--Add a dealer table here -->
-
+    {% endblock %}
 </body>
 
 </html>

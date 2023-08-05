@@ -12,9 +12,7 @@ from requests.auth import HTTPBasicAuth
 # Create a `get_request` to make HTTP GET requests
 # e.g., response = requests.get(url, params=params, headers={'Content-Type': 'application/json'}, auth=HTTPBasicAuth('apikey', api_key))
 def get_request(url, **kwargs):
-    print('getting request')
-    # print(kwargs)
-    # print("GET from {} ".format(url))
+
     try:
         # Call get method of requests library with URL and parameters
         response = requests.get(url, headers={'Content-Type': 'application/json'},
@@ -23,16 +21,14 @@ def get_request(url, **kwargs):
         # If any error occurs
         print("Network exception occurred")
     status_code = response.status_code
-    # print("With status {} ".format(status_code))
     json_data = json.loads(response.text)
-    print('got the request')
     return json_data
 
 
 # Create a `post_request` to make HTTP POST requests
 # e.g., response = requests.post(url, params=kwargs, json=payload)
 def post_request(url,params,**kwargs):
-    print('before',params)
+    print(params)
     try:
         response = requests.get(url=url, params=params)
         response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
@@ -40,12 +36,6 @@ def post_request(url,params,**kwargs):
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
         return None
-    # headers = {'Content-Type': 'application/json'}
-    # Send the POST request with the specified URL, data, and headers
-    # response = requests.get(url=url, json=json, headers=headers)
-    # json_data = response
-    # print(json_data)
-    # return json_data
 
 # Create a get_dealers_from_cf method to get dealers from a cloud function
 def get_dealers_from_cf(url, **kwargs):
@@ -68,24 +58,19 @@ def get_dealers_from_cf(url, **kwargs):
 
 # Create a get_dealer_reviews_from_cf method to get reviews by dealer id from a cloud function
 def get_dealer_reviews_from_cf(url, **kwargs):
-    print('2 getteing dealer reviews in restapis')
     results = []
-    # Call get_request with a URL parameter
+    # Call get_request with a URL parameter that returns list with all reviews
     json_result = get_request(
         url=url, dealer=kwargs['dealerId'] if isinstance(kwargs['dealerId'], int) else 15)
-    print(kwargs['dealerId'],json_result)
-
 
     if json_result:
-        print('after getting the result we will create results with json_restult')
-        
         # For each view object
         for review in json_result:
-            print(review['review'])
             # Create a CarDealer object with values in `doc` object
             dealer_obj = DealerReview(name=review['name'], dealership=review['dealership'], purchase=review['purchase'],
                                       review=review['review'], car_model=review['car_model'], car_year=review['car_year'], sentiment=analyze_review_sentiments(review['review']), id=review['id'], purchase_date=review['purchase_date'], car_make=review['car_make'])
             results.append(dealer_obj)
+    # returns a list with objects of dealer's reviews
     return results
 
 
@@ -102,11 +87,14 @@ def analyze_review_sentiments(dealerreview):
     )
 
     natural_language_understanding.set_service_url(service_url)
-
-    response = natural_language_understanding.analyze(
-        text=dealerreview,
-        features=Features(sentiment=SentimentOptions())
-    ).get_result()
+    try:
+        response = natural_language_understanding.analyze(
+            text=dealerreview,
+            features=Features(sentiment=SentimentOptions())
+        ).get_result()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
 
     # Extract the sentiment score from the response
     sentiment_score = response['sentiment']['document']['score']

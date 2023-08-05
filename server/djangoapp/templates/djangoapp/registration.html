@@ -1,3 +1,4 @@
+{% extends 'djangoapp/static_template.html' %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +8,7 @@
 </head>
     <body>
     <!--Add a registration form here -->
-    
+    {% block content %}
     <!-- Stylize Registration form -->
     <form action="{% url 'djangoapp:registration' %}" method="post">
         <div class="container"> <!--Style root div with .container class -->
@@ -32,5 +33,6 @@
             </div>
         </div>
     </form>
+    {% endblock %}
     </body>
 </html>

@@ -21,15 +21,13 @@ from django.contrib.auth import views as auth_views
 
 app_name = 'djangoapp'
 urlpatterns = [
-    # route is a string contains a URL pattern
-    # view refers to the view function
-    # name the URL
-    path(route='home/', view=views.render_static, name='static_template'),
+    # this route for the home page that renders static_template.html
+    path(route='', view=views.render_static, name='static_template'),
 
-    # path for about view
+    # this path that renders about.html
     path(route='about/', view=views.about, name='about'),
 
-    # path for contact us view
+    # path for contact us view contact.html
     path(route='contact/', view=views.contact, name='about'),
 
     # path for registration
@@ -41,7 +39,7 @@ urlpatterns = [
     # path for logout
     path('logout/', views.logout_request, name='logout'),
 
-    path(route='', view=views.get_dealerships, name='index'),
+    path('dealers/', views.get_dealerships, name='all_dealers'),
 
     # path for dealer reviews view
     path('dealer/<int:dealer_id>/', views.get_dealer_details, name='dealer_details'),
